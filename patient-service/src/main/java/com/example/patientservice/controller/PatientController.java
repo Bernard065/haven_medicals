@@ -45,7 +45,7 @@ public class PatientController {
     }
 
     @PutMapping("/{id}")
-    @Operation(summary = "Update a new Patient")
+    @Operation(summary = "Update a Patient")
     public ResponseEntity<PatientResponseDTO> updatePatient(@PathVariable UUID id,
                                                             @Validated({Default.class}) @RequestBody PatientRequestDTO patientRequestDTO) {
 
