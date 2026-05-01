@@ -36,45 +36,16 @@
     <properties>
         <java.version>21</java.version>
 
-        <!--
-            Spring Framework: DO NOT override here.
-            Spring Boot 3.5.x manages Spring Framework 6.2.x, which is the
-            correct and compatible version for this Boot generation.
-            Spring Framework 7.x requires Spring Boot 4.x — overriding to 7.x
-            with Boot 3.x will cause runtime incompatibilities.
-            Migrate to Spring Boot 4.x when you are ready for Framework 7.x.
-        -->
-
-        <!--
-            Tomcat: managed by Spring Boot 3.5.14 BOM (10.1.x line).
-            The Boot BOM already pins a patched Tomcat release.
-            Only override if you need a specific patch above the managed version.
-            Tomcat 11.x requires Spring Boot 4.x — do not use it here.
-        -->
-
-        <!--
-            AssertJ: managed by Spring Boot BOM.
-            Remove the manual override; Boot 3.5.x ships a patched AssertJ.
-        -->
-
-        <!-- CVE-2025-48924
-             Spring Boot 3.5.x BOM manages commons-lang3 at 3.17.0, which is
-             vulnerable to an uncontrolled recursion (StackOverflowError) in
-             ClassUtils.getClass() on very long inputs (CWE-674, CVSS 5.3).
-             Override to 3.20.0 — the latest release, unaffected since 3.18.0.
-             The Boot BOM property 'commons-lang3.version' controls this across
-             all transitive paths without adding a compile-scoped dependency. -->
+        <!-- CVE-2025-48924: override commons-lang3 to 3.20.0 (fixed since 3.18.0). -->
         <commons-lang3.version>3.20.0</commons-lang3.version>
     </properties>
 
-    <!--
-        lz4-java: pin to 1.10.1 to address CVE-2025-66566.
-        lz4-java is not in the Spring Boot BOM directly; it arrives transitively
-        via kafka-clients. This override pins it across all transitive paths
-        without adding a compile-scoped dependency.
-    -->
     <dependencyManagement>
         <dependencies>
+            <!--
+                lz4-java: pin to 1.10.1 to address CVE-2025-66566.
+                Arrives transitively via kafka-clients; override here covers all paths.
+            -->
             <dependency>
                 <groupId>org.lz4</groupId>
                 <artifactId>lz4-java</artifactId>
@@ -125,11 +96,11 @@
         </dependency>
 
         <!--
-            gRPC: upgraded from 1.69.0 → 1.80.0 (latest stable, March 2026).
-            All three artifacts must share the same version to avoid runtime
-            classpath conflicts. 1.80.0 bundles Netty >= 4.1.124.Final which
-            resolves CVE-2025-55163 (MadeYouReset HTTP/2 DDoS).
-            The protoc plugin version below is also aligned to 1.80.0.
+            gRPC: 1.80.0 (latest stable, March 2026).
+            All three artifacts share the same version to avoid runtime classpath
+            conflicts. 1.80.0 bundles Netty >= 4.1.124.Final which resolves
+            CVE-2025-55163 (MadeYouReset HTTP/2 DDoS).
+            The protoc plugin version below is aligned to 1.80.0.
         -->
         <dependency>
             <groupId>io.grpc</groupId>
@@ -165,17 +136,12 @@
 
         <!--
             Spring Kafka: version managed by Spring Boot 3.5.14 BOM (3.3.15).
-            Remove the explicit version tag so the Boot BOM governs it.
-            The underlying kafka-clients version is also managed by Boot BOM;
-            remove the <kafka.version> property override above as well.
         -->
         <dependency>
             <groupId>org.springframework.kafka</groupId>
             <artifactId>spring-kafka</artifactId>
         </dependency>
-
     </dependencies>
-
 
     <build>
         <extensions>
@@ -183,29 +149,26 @@
             <extension>
                 <groupId>kr.motd.maven</groupId>
                 <artifactId>os-maven-plugin</artifactId>
-                <!-- Bumped from 1.7.0 → 1.7.1 (latest stable, recommended by grpc-java README) -->
-                <version>1.7.1</version>
+                <version>1.7.0</version>
             </extension>
         </extensions>
         <plugins>
-            <!-- Spring Boot / Maven -->
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
             </plugin>
 
-            <!-- Protobuf code generation -->
             <plugin>
                 <groupId>org.xolstice.maven.plugins</groupId>
                 <artifactId>protobuf-maven-plugin</artifactId>
                 <version>0.6.1</version>
                 <configuration>
-                    <!--
-                        protoc: bumped from 3.25.5 → 3.25.8 (latest 3.25.x patch).
-                        pluginArtifact: aligned with grpc dependency version 1.80.0.
-                    -->
-                    <protocArtifact>com.google.protobuf:protoc:3.25.8:exe:${os.detected.classifier}</protocArtifact>
+                    <protocArtifact>com.google.protobuf:protoc:3.25.5:exe:${os.detected.classifier}</protocArtifact>
                     <pluginId>grpc-java</pluginId>
+                    <!--
+                        Aligned protoc-gen-grpc-java to 1.80.0 (was 1.68.1).
+                        Plugin and runtime gRPC versions must match.
+                    -->
                     <pluginArtifact>io.grpc:protoc-gen-grpc-java:1.80.0:exe:${os.detected.classifier}</pluginArtifact>
                 </configuration>
                 <executions>
